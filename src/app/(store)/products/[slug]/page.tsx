@@ -6,9 +6,10 @@ import { AddToCartButton } from '@/components/customer/AddToCartButton';
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const product = await productService.getProductBySlug(params.slug);
+  const { slug } = await params;
+  const product = await productService.getProductBySlug(slug);
 
   if (!product) {
     notFound();

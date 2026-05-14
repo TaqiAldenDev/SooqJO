@@ -1,21 +1,22 @@
 import { ProductCard } from '@/components/customer/ProductCard';
 import { productService } from '@/services/productService';
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Filter, SlidersHorizontal, Package } from 'lucide-react';
 
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: { search?: string; category?: string };
+  searchParams: Promise<{ search?: string; category?: string }>;
 }) {
+  const { search, category } = await searchParams;
   let products = [];
   const categories = await productService.getCategories();
 
-  if (searchParams.search) {
-    products = await productService.searchProducts(searchParams.search);
+  if (search) {
+    products = await productService.searchProducts(search);
   } else {
     products = await productService.getProducts();
-    if (searchParams.category) {
-      products = products.filter(p => p.category?.slug === searchParams.category);
+    if (category) {
+      products = products.filter(p => p.category?.slug === category);
     }
   }
 
@@ -24,7 +25,7 @@ export default async function ShopPage({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-            {searchParams.search ? `Search results for "${searchParams.search}"` : 'Shop Collection'}
+            {search ? `Search results for "${search}"` : 'Shop Collection'}
           </h1>
           <p className="text-gray-500 mt-2">{products.length} products found</p>
         </div>
@@ -48,7 +49,7 @@ export default async function ShopPage({
             <div className="space-y-4">
               <a 
                 href="/shop" 
-                className={`block text-sm font-medium transition-colors ${!searchParams.category ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`block text-sm font-medium transition-colors ${!category ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 All Products
               </a>
@@ -56,7 +57,7 @@ export default async function ShopPage({
                 <a 
                   key={cat.id}
                   href={`/shop?category=${cat.slug}`}
-                  className={`block text-sm font-medium transition-colors ${searchParams.category === cat.slug ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                  className={`block text-sm font-medium transition-colors ${category === cat.slug ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                 >
                   {cat.name}
                 </a>

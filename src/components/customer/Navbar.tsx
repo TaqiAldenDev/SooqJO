@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Search, User, Menu } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, LogOut, Package } from 'lucide-react';
 import { useCart } from '@/lib/store/useCart';
 import { useEffect, useState } from 'react';
 
-export function Navbar() {
+export function Navbar({ user }: { user: any }) {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -22,6 +22,12 @@ export function Navbar() {
     if (searchQuery.trim()) {
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/');
+    router.refresh();
   };
 
   return (
@@ -51,9 +57,24 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center space-x-6">
-            <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors">
-              <User size={24} />
-            </Link>
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Link href="/profile/orders" className="text-gray-600 hover:text-blue-600 transition-colors" title="My Orders">
+                  <Package size={24} />
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-red-600 transition-colors"
+                  title="Logout"
+                >
+                  <LogOut size={24} />
+                </button>
+              </div>
+            ) : (
+              <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors" title="Login">
+                <User size={24} />
+              </Link>
+            )}
             
             <Link href="/cart" className="relative text-gray-600 hover:text-blue-600 transition-colors">
               <ShoppingBag size={24} />

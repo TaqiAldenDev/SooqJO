@@ -1,15 +1,7 @@
+import { authService } from '@/services/authService';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
-  const response = NextResponse.json({ success: true });
-  
-  response.cookies.set({
-    name: 'auth-token',
-    value: '',
-    httpOnly: true,
-    expires: new Date(0),
-    path: '/',
-  });
-
-  return response;
+  await authService.logout();
+  return NextResponse.json({ success: true });
 }

@@ -4,6 +4,7 @@ import { LoginInput, RegisterInput } from '@/lib/validators/auth';
 import { comparePassword, hashPassword } from '@/lib/password';
 import { signToken } from '@/lib/jwt';
 import { UserProfile } from '@/types';
+import { cookies } from 'next/headers';
 
 export const authService = {
   async login({ email, password }: LoginInput) {
@@ -105,5 +106,58 @@ export const authService = {
 
     if (error || !user) return null;
     return user as UserProfile;
+  },
+
+  async logout() {
+    const cookieStore = await cookies();
+    cookieStore.delete('auth-token');
+  },
+
+  async socialLoginSync(supabaseUser: any) {
+    const supabase = createAdminClient();
+    
+    // Check if profile exists
+    let { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', supabaseUser.email)
+      .single();
+
+    if (!profile) {
+      // Create profile if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          email: supabaseUser.email,
+          full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+          avatar_url: supabaseUser.user_metadata?.avatar_url,
+          password_hash: 'OAUTH_USER', // Placeholder since it's OAuth
+          role: 'CUSTOMER'
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+      profile = newProfile;
+    }
+
+    // Sign custom JWT
+    const token = signToken({
+      userId: profile.id,
+      email: profile.email,
+      role: profile.role
+    });
+
+    // Set cookie
+    const cookieStore = await cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
+    return profile;
   }
 };
